@@ -62,6 +62,7 @@ import com.cheatbreaker.client.mod.impl.PlaytimeMod;
 import com.cheatbreaker.client.mod.impl.PotionCounterMod;
 import com.cheatbreaker.client.mod.impl.PotionEffectsMod;
 import com.cheatbreaker.client.mod.impl.ReachDisplayMod;
+import com.cheatbreaker.client.mod.impl.HitRegistrationDebugMod;
 import com.cheatbreaker.client.mod.impl.SPSMod;
 import com.cheatbreaker.client.mod.impl.SaturationMod;
 import com.cheatbreaker.client.mod.impl.ScoreboardMod;
@@ -143,6 +144,7 @@ public class ModManager {
    public ComboCounterMod comboCounterMod;
    public SprintResetCounterMod sprintResetCounterMod;
    public ReachDisplayMod reachDisplayMod;
+   public HitRegistrationDebugMod hitRegistrationDebugMod;
    public ServerAddressMod serverAddressMod;
    public PingMod pingMod;
    public ClockMod clockMod;
@@ -273,6 +275,7 @@ public class ModManager {
       this.abstractModList.add(this.comboCounterMod = new ComboCounterMod());
       this.abstractModList.add(this.sprintResetCounterMod = new SprintResetCounterMod());
       this.abstractModList.add(this.reachDisplayMod = new ReachDisplayMod());
+      this.abstractModList.add(this.hitRegistrationDebugMod = new HitRegistrationDebugMod());
       this.abstractModList.add(this.serverAddressMod = new ServerAddressMod());
       this.abstractModList.add(this.pingMod = new PingMod());
       this.abstractModList.add(this.clockMod = new ClockMod());

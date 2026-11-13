@@ -1,5 +1,6 @@
 package net.minecraft.network;
 
+import com.cheatbreaker.client.mod.impl.HitRegistrationDebugMod;
 import com.cheatbreaker.client.network.ChannelDecryptionHandler;
 import com.cheatbreaker.client.network.ChannelEncryptionHandler;
 import com.cheatbreaker.client.network.PingPongHandler;
@@ -196,6 +197,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
    }
 
    public void dispatchPacket(final Packet inPacket, final GenericFutureListener<? extends Future<? super Void>>[] futureListeners) {
+      final HitRegistrationDebugMod.AttackWrite trace = HitRegistrationDebugMod.tagAttack(this, inPacket);
       final EnumConnectionState fromPacket = EnumConnectionState.getFromPacket(inPacket);
       final EnumConnectionState enumConnectionState = (EnumConnectionState)this.channel.attr(attrKeyConnectionState).get();
       if (enumConnectionState != fromPacket) {
@@ -208,7 +210,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
             this.setConnectionState(fromPacket);
          }
 
-         ChannelFuture writeAndFlush = this.channel.writeAndFlush(inPacket);
+         ChannelFuture writeAndFlush = this.writeWithHitTrace(inPacket, trace);
          if (futureListeners != null) {
             writeAndFlush.addListeners(futureListeners);
          }
@@ -222,7 +224,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
                   NetworkManager.this.setConnectionState(fromPacket);
                }
 
-               ChannelFuture writeAndFlush = NetworkManager.this.channel.writeAndFlush(inPacket);
+               ChannelFuture writeAndFlush = NetworkManager.this.writeWithHitTrace(inPacket, trace);
                if (futureListeners != null) {
                   writeAndFlush.addListeners(futureListeners);
                }
@@ -231,6 +233,17 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
             }
          });
       }
+   }
+
+   private ChannelFuture writeWithHitTrace(
+      Packet packet, HitRegistrationDebugMod.AttackWrite trace
+   ) {
+      if (trace == null) return this.channel.writeAndFlush(packet);
+      this.channel.write(trace.marker(2));
+      ChannelFuture original = this.channel.writeAndFlush(packet);
+      this.channel.writeAndFlush(trace.marker(3));
+      original.addListener(future -> trace.completed(future.isSuccess()));
+      return original;
    }
 
    public void flushOutboundQueue() {

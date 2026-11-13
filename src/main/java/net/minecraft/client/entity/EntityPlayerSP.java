@@ -1,6 +1,7 @@
 package net.minecraft.client.entity;
 
 import com.cheatbreaker.client.CheatBreaker;
+import com.cheatbreaker.client.mod.impl.HitRegistrationDebugMod;
 import com.cheatbreaker.client.event.StringEvent1;
 import com.cheatbreaker.client.mod.impl.ToggleSprintInput;
 import com.cheatbreaker.client.mod.impl.ToggleSprintMod;
@@ -481,11 +482,13 @@ public class EntityPlayerSP extends AbstractClientPlayer {
    @Override
    public void onCriticalHit(Entity entityHit) {
       this.mc.effectRenderer.emitParticleAtEntity(entityHit, EnumParticleTypes.CRIT);
+      HitRegistrationDebugMod.localParticle(entityHit, 1);
    }
 
    @Override
    public void onEnchantmentCritical(Entity entityHit) {
       this.mc.effectRenderer.emitParticleAtEntity(entityHit, EnumParticleTypes.CRIT_MAGIC);
+      HitRegistrationDebugMod.localParticle(entityHit, 2);
    }
 
    @Override

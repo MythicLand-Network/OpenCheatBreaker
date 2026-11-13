@@ -1,6 +1,7 @@
 package net.minecraft.client;
 
 import com.cheatbreaker.client.CheatBreaker;
+import com.cheatbreaker.client.mod.impl.HitRegistrationDebugMod;
 import com.cheatbreaker.client.animation.CosineAnimation;
 import com.cheatbreaker.client.event.BooleanIntEvent;
 import com.cheatbreaker.client.event.ClientTickEvent;
@@ -263,6 +264,8 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
    public LoadingScreenRenderer loadingScreen;
    public EntityRenderer entityRenderer;
    public int leftClickCounter;
+   private static final boolean FIX_MISS_COOLDOWN = Boolean.getBoolean("ocb.fixMissCooldown");
+   private boolean leftClickCooldownFromMiss;
    public Queue<FutureTask<?>> scheduledTasks = Queues.newArrayDeque();
    public long frameTime = 0L;
    public Thread mcThread = Thread.currentThread();
@@ -1314,6 +1317,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
          this.mouseHelper.grabMouseCursor();
          this.displayGuiScreen((GuiScreen)null);
          this.leftClickCounter = 10000;
+         this.leftClickCooldownFromMiss = false;
       }
    }
 
@@ -1337,6 +1341,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
    public void sendClickBlockToController(boolean leftClick) {
       if (!leftClick) {
          this.leftClickCounter = 0;
+         this.leftClickCooldownFromMiss = false;
       }
 
       if (this.leftClickCounter <= 0 && !this.thePlayer.isUsingItem()) {
@@ -1354,10 +1359,28 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
    }
 
    public void clickMouse() {
-      if (this.leftClickCounter <= 0) {
+      HitRegistrationDebugMod trace = HitRegistrationDebugMod.active();
+      if (trace == null) {
+         this.handleAttackClick(null);
+         return;
+      }
+      trace.beginClick(this.objectMouseOver);
+      try {
+         this.handleAttackClick(trace);
+      } finally {
+         trace.endClick();
+      }
+   }
+
+   private void handleAttackClick(HitRegistrationDebugMod trace) {
+      if (this.leftClickCounter <= 0 || this.canAttackDuringMissCooldown()) {
          IntEvent2 intEvent2 = new IntEvent2(0);
          CheatBreaker.getInstance().getEventBus().handleEvent(intEvent2);
          if (intEvent2.isFlag()) {
+            if (trace != null) {
+               String reason = intEvent2.getRejectionReason();
+               trace.rejectClick(reason == null ? "client.click_cancelled" : reason);
+            }
             CheatBreaker.getInstance().getEventBus().handleEvent(new SimpleEvent35());
             return;
          }
@@ -1368,6 +1391,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
             logger.error("Null returned as 'hitResult', this shouldn't happen!");
             if (this.playerController.isNotCreative()) {
                this.leftClickCounter = 10;
+               this.leftClickCooldownFromMiss = false;
             }
          } else {
             switch (this.objectMouseOver.typeOfHit) {
@@ -1388,12 +1412,21 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
 
                   if (this.playerController.isNotCreative()) {
                      this.leftClickCounter = 10;
+                     this.leftClickCooldownFromMiss = true;
                   }
             }
          }
       } else {
+         if (trace != null) trace.rejectClick("client.left_click_cooldown");
          CheatBreaker.getInstance().getEventBus().handleEvent(new SimpleEvent35());
       }
+   }
+
+   private boolean canAttackDuringMissCooldown() {
+      return FIX_MISS_COOLDOWN && this.leftClickCooldownFromMiss
+         && this.currentScreen == null && this.inGameHasFocus
+         && this.objectMouseOver != null && this.objectMouseOver.typeOfHit == MovingObjectType.ENTITY
+         && this.objectMouseOver.entityHit != null;
    }
 
    public void rightClickMouse() {
@@ -1564,6 +1597,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
 
       if (this.currentScreen != null) {
          this.leftClickCounter = 10000;
+         this.leftClickCooldownFromMiss = false;
       }
 
       CheatBreaker.getInstance().getEventBus().handleEvent(new ClientTickEvent());

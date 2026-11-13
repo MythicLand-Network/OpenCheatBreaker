@@ -60,14 +60,14 @@ public class RateLimiter {
       }
    }
 
-   public boolean tryAcquire() {
+   public String acquireRejectionReason() {
       long currentTimeMillis = System.currentTimeMillis();
       if (this.minInterval >= 0 && currentTimeMillis - this.lastTime < this.minInterval) {
-         return false;
+         return "client.click_min_interval";
       }
 
       if (this.burstRate >= 0.0 && this.burstCount > 2.0) {
-         return false;
+         return "client.click_burst_cap";
       }
 
       if (this.burstRate >= 0.0) {
@@ -77,11 +77,11 @@ public class RateLimiter {
       if (this.maxPerSecond >= 0) {
          this.timestamps.removeIf(longValue -> currentTimeMillis - longValue >= 1000L);
          if (this.timestamps.size() >= this.maxPerSecond) {
-            return false;
+            return "client.click_cps_cap";
          }
       }
 
-      return true;
+      return null;
    }
 
    public void markUsed() {

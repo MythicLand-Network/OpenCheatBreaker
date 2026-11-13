@@ -74,6 +74,7 @@ public class ModsScreen extends GuiScreen {
          float[] floats;
          if (abstractMod2.getAnchorPoint() != null
             && abstractMod2.isEnabled()
+            && (abstractMod2.hudOnly || abstractMod2.isRenderHud())
             && !abstractMod2.getName().contains("Zans")
             && n > (floats = abstractMod2.getHudPosition(scaledResolution, true))[0] * abstractMod2.getHudScale()
             && n < (floats[0] + abstractMod2.hudWidth) * abstractMod2.getHudScale()
@@ -660,7 +661,8 @@ public class ModsScreen extends GuiScreen {
 
    public AbstractMod getModAt(ScaledResolution scaledResolution, int n, int n2) {
       for (AbstractMod abstractMod : this.mods) {
-         if (abstractMod.getAnchorPoint() != null && !abstractMod.getName().contains("Zans")) {
+         if (abstractMod.getAnchorPoint() != null && abstractMod.isEnabled()
+            && (abstractMod.hudOnly || abstractMod.isRenderHud()) && !abstractMod.getName().contains("Zans")) {
             float[] hudPosition = abstractMod.getHudPosition(scaledResolution, true);
             boolean flag = !abstractMod.getSettings().isEmpty()
                && n >= hudPosition[0] * abstractMod.getHudScale()
@@ -1038,7 +1040,7 @@ public class ModsScreen extends GuiScreen {
          }
 
          AbstractMod modAt = this.getModAt(scaledResolution, n, n2);
-         if ((abstractMod == null || !this.flag) && modAt != null) {
+         if (n3 == 0 && (abstractMod == null || !this.flag) && modAt != null) {
             float[] hudPosition = modAt.getHudPosition(scaledResolution, true);
             boolean flag = modAt.hudWidth < 22.0F || modAt.hudHeight < 8.0F;
             boolean flag2 = !flag
@@ -1072,12 +1074,10 @@ public class ModsScreen extends GuiScreen {
                this.settingsPanel.showingGlobalSettings = false;
                this.settingsPanel.abstractMod = modAt;
                this.currentPanel = this.settingsPanel;
+               return;
             } else if (flag3 || flag5) {
                Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
                modAt.setEnabled(false);
-            }
-
-            if (!flag) {
                return;
             }
          }
@@ -1154,8 +1154,10 @@ public class ModsScreen extends GuiScreen {
                this.flag2 = !this.flag2;
             }
 
-            this.clickTabButtons(n, n2, n3);
             this.drawAnchorGuides(scaledResolution, n, n2, n3);
+            if (abstractMod == null) {
+               this.clickTabButtons(n, n2, n3);
+            }
          }
 
          for (SettingComponent settingComponent : this.tabButtons) {
@@ -1500,7 +1502,7 @@ public class ModsScreen extends GuiScreen {
       boolean flag = false;
 
       for (AbstractMod abstractMod : this.mods) {
-         if (abstractMod.getAnchorPoint() != null) {
+         if (abstractMod.getAnchorPoint() != null && abstractMod.isEnabled() && (abstractMod.hudOnly || abstractMod.isRenderHud())) {
             float[] hudPosition = abstractMod.getHudPosition(scaledResolution, true);
             boolean flag2 = n > hudPosition[0] * abstractMod.getHudScale()
                && n < (hudPosition[0] + abstractMod.hudWidth) * abstractMod.getHudScale()

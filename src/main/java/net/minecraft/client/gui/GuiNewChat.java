@@ -9,7 +9,6 @@ import com.cheatbreaker.client.mod.impl.ChatMod;
 import com.cheatbreaker.client.render.RenderUtils;
 import com.google.common.collect.Lists;
 import java.awt.Color;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -32,8 +31,6 @@ public class GuiNewChat extends Gui {
    public List<ChatLine> drawnChatLines = Lists.newArrayList();
    public int scrollPos;
    public boolean isScrolled;
-   public List<ChatLine> iconLines = new ArrayList<>();
-   public List<ChatLine> highlightedLines = new ArrayList<>();
    public boolean smoothChat = false;
    public float smoothAlpha;
    public static final int ICON_WIDTH = 17;
@@ -88,20 +85,6 @@ public class GuiNewChat extends Gui {
                         drawRect(b, n5 - 9, b + n2 + 4, n5, n4 / 2 << 24);
                         String formattedText = chatLine.getChatComponent().getFormattedText();
                         GlStateManager.enableBlend();
-
-                        for (int j = 0; j + this.scrollPos < this.drawnChatLines.size() && j < this.getLineCount(); j++) {
-                           ChatLine chatLine2 = this.drawnChatLines.get(j + this.scrollPos);
-                           if ((flag || 10.0 - (updateCounter - chatLine2.getUpdatedCounter()) / 20.0 > 1.0) && chatLine2 instanceof ClientChatLine) {
-                              ClientChatLine clientChatLine = (ClientChatLine)chatLine2;
-                              if (clientChatLine.hasIcon()) {
-                                 this.iconLines.add(chatLine2);
-                              }
-
-                              if (clientChatLine.isHighlighted()) {
-                                 this.highlightedLines.add(chatLine2);
-                              }
-                           }
-                        }
 
                         this.mc.fontRendererObj.drawStringWithShadow(formattedText, b, n5 - 8, 16777215 + (n4 << 24));
                         GlStateManager.disableAlpha();
@@ -459,7 +442,8 @@ public class GuiNewChat extends Gui {
                         float f2 = flag3 ? 17.0F : 0.0F;
                         if (this.mc.currentScreen instanceof GuiChat && chatMod.showBackground.getValue().equals("While Typing")
                            || chatMod.showBackground.getValue().equals("ON")) {
-                           int n7 = this.highlightedLines.contains(chatLine) ? -1431699456 : chatMod.backgroundColor.getColorValue();
+                           boolean highlighted = chatLine instanceof ClientChatLine && ((ClientChatLine)chatLine).isHighlighted();
+                           int n7 = highlighted ? -1431699456 : chatMod.backgroundColor.getColorValue();
                            int n8 = (int)((chatMod.backgroundColor.getColorValue() >> 24 & 0xFF) * (n5 / 255.0F));
                            int n9 = n7 >> 16 & 0xFF;
                            int n10 = n7 >> 8 & 0xFF;
@@ -479,19 +463,6 @@ public class GuiNewChat extends Gui {
                                     chatMod.getHighlightFormatting() + Minecraft.getMinecraft().getSession().getUsername()
                                  )
                                  + chatMod.getLastFormatting(formattedText.split(username)[0]);
-                           }
-                        }
-
-                        for (int j = 0; j + this.scrollPos < this.drawnChatLines.size() && j < this.getLineCount(); j++) {
-                           if ((flag2 || 10.0 - (n - chatLine.getUpdatedCounter()) / 20.0 > 1.0) && chatLine instanceof ClientChatLine) {
-                              ClientChatLine clientChatLine = (ClientChatLine)chatLine;
-                              if (clientChatLine.hasIcon()) {
-                                 this.iconLines.add(chatLine);
-                              }
-
-                              if (clientChatLine.isHighlighted()) {
-                                 this.highlightedLines.add(chatLine);
-                              }
                            }
                         }
 

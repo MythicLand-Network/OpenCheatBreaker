@@ -181,7 +181,7 @@ val releasePackage = tasks.register("releasePackage") {
             ZipFile(nativeJar).use { zip ->
                 for (entry in zip.entries().asSequence()) {
                     val name = entry.name
-                    if (entry.isDirectory || name.startsWith("META-INF/") || name.contains("openal", ignoreCase = true)) {
+                    if (entry.isDirectory || name.startsWith("META-INF/")) {
                         continue
                     }
                     File(nativesDir, name).outputStream().use { out -> zip.getInputStream(entry).use { it.copyTo(out) } }
@@ -204,9 +204,11 @@ val releasePackage = tasks.register("releasePackage") {
         )
 
         File(root, "start.bat").writeText(releaseSource.file("start.bat").asFile.readText().replace("\r\n", "\n").replace("\n", "\r\n"))
+        releaseSource.file("START Hit Registration.bat").asFile.copyTo(File(root, "START Hit Registration.bat"), overwrite = true)
         releaseSource.file("README.txt").asFile.copyTo(File(root, "README.txt"), overwrite = true)
         File(root, "tools").mkdirs()
         releaseSource.file("tools/download-assets.ps1").asFile.copyTo(File(root, "tools/download-assets.ps1"), overwrite = true)
+        releaseSource.file("tools/start-hit-registration.ps1").asFile.copyTo(File(root, "tools/start-hit-registration.ps1"), overwrite = true)
     }
 }
 

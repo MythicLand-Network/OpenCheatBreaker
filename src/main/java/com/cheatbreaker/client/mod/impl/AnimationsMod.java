@@ -70,7 +70,6 @@ import net.minecraft.item.ItemSkull;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Potion;
 import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.ResourceLocation;
@@ -214,11 +213,10 @@ public class AnimationsMod extends AbstractMod {
                thePlayer.onCriticalHit(objectMouseOver.entityHit);
             }
 
-            if (EnchantmentHelper.getModifierForCreature(thePlayer.getHeldItem(), ((EntityLivingBase)objectMouseOver.entityHit).getCreatureAttribute()) > 0.0F) {
+            ParticlesMod particles = CheatBreaker.getInstance().getModManager().particlesMod;
+            if (EnchantmentHelper.getModifierForCreature(thePlayer.getHeldItem(), ((EntityLivingBase)objectMouseOver.entityHit).getCreatureAttribute()) > 0.0F
+               || (particles.isEnabled() && particles.sharpnessParticles.getValue().equals("Always"))) {
                thePlayer.onEnchantmentCritical(objectMouseOver.entityHit);
-            } else if (CheatBreaker.getInstance().getModManager().particlesMod.isEnabled()
-               && CheatBreaker.getInstance().getModManager().particlesMod.sharpnessParticles.getValue().equals("Always")) {
-               this.mc.effectRenderer.emitParticleAtEntity(objectMouseOver.entityHit, EnumParticleTypes.CRIT_MAGIC);
             }
          }
 

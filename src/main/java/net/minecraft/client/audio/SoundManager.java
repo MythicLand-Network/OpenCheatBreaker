@@ -34,6 +34,7 @@ import paulscode.sound.SoundSystemLogger;
 import paulscode.sound.Source;
 import paulscode.sound.codecs.CodecJOrbis;
 import paulscode.sound.libraries.LibraryJavaSound;
+import paulscode.sound.libraries.LibraryLWJGLOpenAL;
 import com.cheatbreaker.client.audio.JavaSoundMixer;
 
 public class SoundManager {
@@ -57,11 +58,14 @@ public class SoundManager {
       this.options = gameSettings;
 
       try {
+         if (Boolean.getBoolean("ocb.hitTraceOpenAL")) {
+            SoundSystemConfig.addLibrary(LibraryLWJGLOpenAL.class);
+         }
          SoundSystemConfig.addLibrary(LibraryJavaSound.class);
          JavaSoundMixer.select();
          SoundSystemConfig.setCodec("ogg", CodecJOrbis.class);
       } catch (SoundSystemException e) {
-         logger.error(LOG_MARKER, "Error linking with the LibraryJavaSound plug-in", e);
+         logger.error(LOG_MARKER, "Error configuring sound libraries", e);
       }
    }
 
@@ -99,7 +103,8 @@ public class SoundManager {
                   SoundManager.this.sndSystem = SoundManager.this.new SoundSystemStarterThread();
                   SoundManager.this.loaded = true;
                   SoundManager.this.sndSystem.setMasterVolume(SoundManager.this.options.getSoundLevel(SoundCategory.MASTER));
-                  SoundManager.logger.info(SoundManager.LOG_MARKER, "Sound engine started");
+                  SoundManager.logger.info(SoundManager.LOG_MARKER, "Sound engine started ({})",
+                        SoundManager.this.sndSystem.getBackendName());
                }
             }, "Sound Library Loader").start();
          } catch (RuntimeException e) {
@@ -412,6 +417,10 @@ public class SoundManager {
 
    class SoundSystemStarterThread extends SoundSystem {
       public SoundSystemStarterThread() {
+      }
+
+      private String getBackendName() {
+         return this.soundLibrary == null ? "unavailable" : this.soundLibrary.getClass().getSimpleName();
       }
 
       public boolean playing(String str) {

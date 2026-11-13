@@ -13,8 +13,9 @@ public class ClickRateLimiter {
 
    public void onIntEvent2(IntEvent2 intEvent2) {
       if (!intEvent2.isFlag()) {
-         if (!this.getLimiter(intEvent2.getIntValue()).tryAcquire()) {
-            intEvent2.setFlag(true);
+         String reason = this.getLimiter(intEvent2.getIntValue()).acquireRejectionReason();
+         if (reason != null) {
+            intEvent2.rejectClick(reason);
          }
       }
    }

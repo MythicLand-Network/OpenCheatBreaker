@@ -1,6 +1,7 @@
 package net.minecraft.client.network;
 
 import com.cheatbreaker.client.CheatBreaker;
+import com.cheatbreaker.client.mod.impl.HitRegistrationDebugMod;
 import com.cheatbreaker.client.event.EntityS19PacketEntityStatusEvent;
 import com.cheatbreaker.client.event.PacketEvent;
 import com.cheatbreaker.client.event.S01PacketJoinGameEvent;
@@ -1470,6 +1471,15 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
    @Override
    public void handleCustomPayload(S3FPacketCustomPayload packetIn) {
       PacketThreadUtil.checkThreadAndEnqueue(packetIn, this, this.gameController);
+      if (HitRegistrationDebugMod.CHANNEL.equals(packetIn.getChannelName())) {
+         HitRegistrationDebugMod trace = HitRegistrationDebugMod.active();
+         try {
+            if (trace != null) trace.receive(this.netManager, packetIn.getBufferData());
+         } finally {
+            packetIn.getBufferData().release();
+         }
+         return;
+      }
       PacketBuffer bufferData = packetIn.getBufferData();
       packetIn.getBufferData().markReaderIndex();
       byte[] bytes = new byte[bufferData.readableBytes()];
