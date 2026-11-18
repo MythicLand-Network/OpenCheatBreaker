@@ -1,6 +1,7 @@
 package net.minecraft.client;
 
 import com.cheatbreaker.client.CheatBreaker;
+import com.cheatbreaker.client.diagnostics.ConnectionDiagnostics;
 import com.cheatbreaker.client.mod.impl.HitRegistrationDebugMod;
 import com.cheatbreaker.client.animation.CosineAnimation;
 import com.cheatbreaker.client.event.BooleanIntEvent;
@@ -984,6 +985,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
    }
 
    public void runGameLoop() throws IOException {
+      ConnectionDiagnostics.frame(this.getLimitFramerate(), Display.isActive());
       long nanoTime = System.nanoTime();
       this.mcProfiler.startSection("root");
       if (Display.isCreated() && Display.isCloseRequested()) {

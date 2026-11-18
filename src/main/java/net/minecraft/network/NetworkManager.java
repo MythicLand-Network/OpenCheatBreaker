@@ -1,5 +1,6 @@
 package net.minecraft.network;
 
+import com.cheatbreaker.client.diagnostics.ConnectionDiagnostics;
 import com.cheatbreaker.client.mod.impl.HitRegistrationDebugMod;
 import com.cheatbreaker.client.network.ChannelDecryptionHandler;
 import com.cheatbreaker.client.network.ChannelEncryptionHandler;
@@ -105,6 +106,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
    public EnumPacketDirection direction;
    public ChannelEncryptionHandler channelEncryptionHandler;
    public ScheduledFuture scheduledFuture;
+   public volatile ConnectionDiagnostics.Session connectionDiagnostics;
 
    public NetworkManager(EnumPacketDirection packetDirection) {
       this.direction = packetDirection;
@@ -124,6 +126,8 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
 
    public void setConnectionState(EnumConnectionState newState) {
       this.channel.attr(attrKeyConnectionState).set(newState);
+      ConnectionDiagnostics.Session diagnostics = this.connectionDiagnostics;
+      if (diagnostics != null) diagnostics.stateChanged(newState);
       this.channel.config().setAutoRead(true);
       logger.debug("Enabled auto read");
    }
@@ -133,6 +137,8 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
    }
 
    public void exceptionCaught(ChannelHandlerContext channelHandlerContext, Throwable throwable) throws Exception {
+      ConnectionDiagnostics.Session diagnostics = this.connectionDiagnostics;
+      if (diagnostics != null) diagnostics.exception(throwable);
       ChatComponentTranslation chatComponentTranslation;
       if (throwable instanceof TimeoutException) {
          chatComponentTranslation = new ChatComponentTranslation("disconnect.timeout");
@@ -197,6 +203,8 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
    }
 
    public void dispatchPacket(final Packet inPacket, final GenericFutureListener<? extends Future<? super Void>>[] futureListeners) {
+      final ConnectionDiagnostics.Session diagnostics = this.connectionDiagnostics;
+      final long requestedNanos = diagnostics == null ? 0 : diagnostics.dispatchRequested(inPacket);
       final HitRegistrationDebugMod.AttackWrite trace = HitRegistrationDebugMod.tagAttack(this, inPacket);
       final EnumConnectionState fromPacket = EnumConnectionState.getFromPacket(inPacket);
       final EnumConnectionState enumConnectionState = (EnumConnectionState)this.channel.attr(attrKeyConnectionState).get();
@@ -210,6 +218,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
             this.setConnectionState(fromPacket);
          }
 
+         if (diagnostics != null) diagnostics.dispatched(requestedNanos);
          ChannelFuture writeAndFlush = this.writeWithHitTrace(inPacket, trace);
          if (futureListeners != null) {
             writeAndFlush.addListeners(futureListeners);
@@ -224,6 +233,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
                   NetworkManager.this.setConnectionState(fromPacket);
                }
 
+               if (diagnostics != null) diagnostics.dispatched(requestedNanos);
                ChannelFuture writeAndFlush = NetworkManager.this.writeWithHitTrace(inPacket, trace);
                if (futureListeners != null) {
                   writeAndFlush.addListeners(futureListeners);
@@ -276,6 +286,12 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
 
    public void closeChannel(IChatComponent message) {
       if (this.channel.isOpen()) {
+         ConnectionDiagnostics.Session diagnostics = this.connectionDiagnostics;
+         if (diagnostics != null) {
+            String reasonKey = "literal_disconnect_reason";
+            if (message instanceof ChatComponentTranslation) reasonKey = ((ChatComponentTranslation)message).getKey();
+            diagnostics.closeRequested(reasonKey);
+         }
          this.channel.close().awaitUninterruptibly();
          this.terminationReason = message;
       }
@@ -313,6 +329,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
                            .addLast("prepender", new MessageSerializer2())
                            .addLast("encoder", new MessageSerializer(EnumPacketDirection.SERVERBOUND))
                            .addLast("packet_handler", networkManager);
+                        ConnectionDiagnostics.attach(networkManager, channel);
                      }
                   }
                ))

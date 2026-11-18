@@ -1,5 +1,7 @@
 package net.minecraft.network;
 
+import com.cheatbreaker.client.diagnostics.ConnectionDiagnostics;
+import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.network.play.server.S01PacketJoinGame;
 import net.minecraft.network.play.server.S07PacketRespawn;
 import net.minecraft.network.play.server.S08PacketPlayerPosLook;
@@ -11,11 +13,19 @@ public class PacketThreadUtil {
 
    public static <T extends INetHandler> void checkThreadAndEnqueue(final Packet<T> packet, final T value, IThreadListener threadListener) throws ThreadQuickExitException {
       if (!threadListener.isCallingFromMinecraftThread()) {
+         final ConnectionDiagnostics.Session diagnostics = value instanceof NetHandlerPlayClient
+            ? ((NetHandlerPlayClient)value).getNetworkManager().connectionDiagnostics : null;
+         final long queuedNanos = diagnostics == null ? 0 : diagnostics.taskQueued();
          threadListener.addScheduledTask(new Runnable() {
             @Override
             public void run() {
-               PacketThreadUtil.clientPreProcessPacket(packet);
-               packet.processPacket(value);
+               long startedNanos = diagnostics == null ? 0 : diagnostics.taskStarted(queuedNanos, packet);
+               try {
+                  PacketThreadUtil.clientPreProcessPacket(packet);
+                  packet.processPacket(value);
+               } finally {
+                  if (diagnostics != null) diagnostics.taskFinished(startedNanos, packet);
+               }
             }
          });
          throw ThreadQuickExitException.INSTANCE;

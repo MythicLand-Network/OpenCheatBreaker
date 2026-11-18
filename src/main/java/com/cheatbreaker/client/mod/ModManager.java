@@ -24,6 +24,7 @@ import com.cheatbreaker.client.mod.impl.CameraController;
 import com.cheatbreaker.client.mod.impl.ChatMod;
 import com.cheatbreaker.client.mod.impl.ClockMod;
 import com.cheatbreaker.client.mod.impl.ComboCounterMod;
+import com.cheatbreaker.client.mod.impl.ConnectionDiagnosticsMod;
 import com.cheatbreaker.client.mod.impl.CooldownsMod;
 import com.cheatbreaker.client.mod.impl.CoordinatesMod;
 import com.cheatbreaker.client.mod.impl.CreditsMod;
@@ -276,6 +277,7 @@ public class ModManager {
       this.abstractModList.add(this.sprintResetCounterMod = new SprintResetCounterMod());
       this.abstractModList.add(this.reachDisplayMod = new ReachDisplayMod());
       this.abstractModList.add(this.hitRegistrationDebugMod = new HitRegistrationDebugMod());
+      this.abstractModList.add(new ConnectionDiagnosticsMod());
       this.abstractModList.add(this.serverAddressMod = new ServerAddressMod());
       this.abstractModList.add(this.pingMod = new PingMod());
       this.abstractModList.add(this.clockMod = new ClockMod());

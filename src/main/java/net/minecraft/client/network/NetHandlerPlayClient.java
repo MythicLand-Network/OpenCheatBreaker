@@ -1,6 +1,7 @@
 package net.minecraft.client.network;
 
 import com.cheatbreaker.client.CheatBreaker;
+import com.cheatbreaker.client.diagnostics.ConnectionDiagnostics;
 import com.cheatbreaker.client.mod.impl.HitRegistrationDebugMod;
 import com.cheatbreaker.client.event.EntityS19PacketEntityStatusEvent;
 import com.cheatbreaker.client.event.PacketEvent;
@@ -1319,6 +1320,8 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 
    @Override
    public void handleKeepAlive(S00PacketKeepAlive packetIn) {
+      ConnectionDiagnostics.Session diagnostics = this.netManager.connectionDiagnostics;
+      if (diagnostics != null) diagnostics.keepAliveHandled(packetIn.getId());
       CheatBreaker.getInstance().getEventBus().handleEvent(new SimpleEvent20());
       this.addToSendQueue(new C00PacketKeepAlive(packetIn.getId()));
    }
